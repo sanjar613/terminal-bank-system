@@ -1,13 +1,13 @@
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public abstract class Account {
+public class Account {
     private String accountNumber;
     private BigDecimal balance;
     private LocalDateTime createdAt;
     private User owner;
 
-    public Account(String accountNumber, BigDecimal balance, LocalDateTime createdAt, User owner){
+    public Account(String accountNumber, BigDecimal balance,LocalDateTime createdAt, User owner){
         this.accountNumber = accountNumber;
         this.balance = balance;
         this.createdAt = createdAt;
@@ -26,7 +26,7 @@ public abstract class Account {
     public void deposit(double amount){
         if(amount > 0){
             this.balance = balance.add(BigDecimal.valueOf(amount));
-        } else {
+        }else{
             System.out.println("Amount can not be a negative number");
         }
     }
@@ -35,7 +35,7 @@ public abstract class Account {
         if (amount > 0 && balance.compareTo(BigDecimal.valueOf(amount)) >= 0){
             balance = balance.subtract(BigDecimal.valueOf(amount));
             return true;
-        } else {
+        }else{
             System.out.println("not enough money");
             return false;
         }
@@ -43,6 +43,6 @@ public abstract class Account {
 
     @Override
     public String toString(){
-        return "Account: " + accountNumber + " Balance: " + balance;
+        return "account: " + accountNumber + " balance : " + balance;
     }
 }

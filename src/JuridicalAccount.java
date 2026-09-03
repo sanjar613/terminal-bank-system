@@ -11,9 +11,4 @@ public class JuridicalAccount extends Account {
 
     public String getCompany() { return company; }
     public void setCompany(String company) { this.company = company; }
-
-    @Override
-    public String toString() {
-        return super.toString() + " Company: " + company + " (Juridical)";
-    }
 }
