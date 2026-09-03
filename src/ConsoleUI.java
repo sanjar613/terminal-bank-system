@@ -30,6 +30,15 @@ public class ConsoleUI {
                     System.out.print("enter password: ");
                     String password = readPassword();
                     bank.registerUser(firstName,lastName,middleName,login,password);
+                    User currentUser = bank.login(login, password);
+                    if(currentUser != null){
+                        if (currentUser.getRole() == User.Role.ADMIN ){
+                            showAdminMenu(currentUser);
+                        }else if (currentUser.getRole() == User.Role.CLIENT){
+                            showClientMenu(currentUser);
+                        }
+                    }
+
                     break;
                 }
                 case 2:{
