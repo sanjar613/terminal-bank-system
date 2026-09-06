@@ -7,14 +7,14 @@ public class ConsoleUI {
 
     public ConsoleUI(){
         this.bank = new Bank();
-        this.input  = new Scanner(System.in);
+        this.input = new Scanner(System.in);
     }
 
     public void start(){
         while(true) {
-            System.out.println("1. register ");
-            System.out.println("2. login ");
-            System.out.println("3. Logout ");
+            System.out.println("1. Register ");
+            System.out.println("2. Login ");
+            System.out.println("3. Exit ");
             int choice = readInt();
             switch (choice){
                 case 1:{
@@ -26,31 +26,32 @@ public class ConsoleUI {
                     System.out.print("enter middle name: ");
                     String middleName = readName();
                     System.out.print("enter nick name: ");
-                    String login  = readUnique();
+                    String nickName  = readUniqueNickName();
                     System.out.print("enter password: ");
                     String password = readPassword();
-                    bank.registerUser(firstName,lastName,middleName,login,password);
-                    User currentUser = bank.login(login, password);
+
+                    bank.registerUser(firstName, lastName, middleName, nickName, password);
+
+                    User currentUser = bank.login(nickName, password);
                     if(currentUser != null){
                         if (currentUser.getRole() == User.Role.ADMIN ){
                             showAdminMenu(currentUser);
-                        }else if (currentUser.getRole() == User.Role.CLIENT){
+                        } else if (currentUser.getRole() == User.Role.CLIENT){
                             showClientMenu(currentUser);
                         }
                     }
-
                     break;
                 }
                 case 2:{
                     System.out.print("enter nick name: ");
-                    String login = input.nextLine();
+                    String nickName = readNotBlank();
                     System.out.print("enter password: ");
-                    String password = input.nextLine();
-                    User currentUser = bank.login(login,password);
+                    String password = readNotBlank();
+                    User currentUser = bank.login(nickName, password);
                     if(currentUser != null){
                         if (currentUser.getRole() == User.Role.ADMIN ){
                             showAdminMenu(currentUser);
-                        }else if (currentUser.getRole() == User.Role.CLIENT){
+                        } else if (currentUser.getRole() == User.Role.CLIENT){
                             showClientMenu(currentUser);
                         }
                     }
@@ -59,7 +60,7 @@ public class ConsoleUI {
                 case 3:
                     return;
                 default:
-                    System.out.println("Warning , please enter valid number");
+                    System.out.println("Warning, please enter valid number");
                     break;
             }
         }
@@ -75,20 +76,22 @@ public class ConsoleUI {
                     4. View Account Details
                     5. Update Account Details
                     6. Delete Account
-                    7. Logout
+                    7. View Individual Accounts
+                    8. View Juridical Accounts
+                    9. Logout
                     """);
             int adminChoice = readInt();
 
             switch (adminChoice) {
                 case 1:{
                     System.out.println("enter branch: ");
-                    String branch = input.nextLine();
+                    String branch = readNotBlank();
                     bank.createIndividualAccount(currentUser, branch);
                     break;
                 }
                 case 2:{
                     System.out.println("enter company name: ");
-                    String company = input.nextLine();
+                    String company = readNotBlank();
                     bank.createJuridicalAccount(currentUser, company);
                     break;
                 }
@@ -99,37 +102,43 @@ public class ConsoleUI {
                 case 4: {
                     System.out.println("enter account number to see details");
                     String accountNumber = input.nextLine();
-                    System.out.println(" Accont details: " + bank.findAccountByNumber(accountNumber));
+                    System.out.println("Account details: " + bank.findAccountByNumber(accountNumber));
                     break;
                 }
                 case 5: {
                     System.out.println("enter account number: ");
-                    String accountNumber = input.nextLine();
+                    String accountNumber = readNotBlank();
                     Account accountToUpdate = bank.findAccountByNumber(accountNumber);
-                    if (accountToUpdate == null) {
-                        System.out.println("please enter valid account number");
-                        break;
-                    }
                     if (accountToUpdate instanceof IndividualAccount indAcc) {
                         System.out.print("enter new branch: ");
-                        String newBranch = input.nextLine();
+                        String newBranch = readNotBlank();
                         indAcc.setBranch(newBranch);
-                        System.out.println(" account branch successfully updated");
+                        System.out.println("account branch successfully updated");
                     } else if (accountToUpdate instanceof JuridicalAccount jurAcc) {
                         System.out.print("enter new company name: ");
-                        String newCompany = input.nextLine();
+                        String newCompany = readNotBlank();
                         jurAcc.setCompany(newCompany);
                         System.out.println("account company name successfully updated");
                     }
+                    // Сохраняем после обновления, чтобы изменения не пропали!
+                    bank.saveData();
                     break;
                 }
                 case 6:{
                     System.out.println("enter account number to delete");
                     String accountNumber = input.nextLine();
-                    bank.deleteAccount(accountNumber); // Проверка баланса теперь под капотом Bank
+                    bank.deleteAccount(accountNumber);
                     break;
                 }
                 case 7:{
+                    System.out.println("all Individual accounts: " + bank.getIndividualAccounts());
+                    break; // Исправлено (добавлен break)
+                }
+                case 8:{
+                    System.out.println("all Juridical accounts: " + bank.getJuridicalAccounts());
+                    break; // Исправлено (добавлен break)
+                }
+                case 9:{
                     return;
                 }
                 default:
@@ -138,10 +147,9 @@ public class ConsoleUI {
         }
     }
 
-
     private void showClientMenu(User currentUser) {
         while (true) {
-            System.out.println( """
+            System.out.println("""
                     ===== User Menu ===== 
                     1. Create account 
                     2. See all accounts
@@ -156,30 +164,30 @@ public class ConsoleUI {
             switch (clientChoice){
                 case 1: {
                     if (currentUser.getAccounts().isEmpty()) {
-                        System.out.println("1.individual account");
-                        System.out.println("2.Juridical account");
+                        System.out.println("1. Individual account");
+                        System.out.println("2. Juridical account");
                         int typeChoice = readInt();
                         if (typeChoice == 1) {
                             System.out.println("enter branch: ");
-                            String branch = input.nextLine();
+                            String branch = readNotBlank();
                             bank.createIndividualAccount(currentUser, branch);
                         } else if (typeChoice == 2) {
                             System.out.println("enter company name: ");
-                            String company = input.nextLine();
+                            String company = readNotBlank();
                             bank.createJuridicalAccount(currentUser, company);
-                        }else {
+                        } else {
                             System.out.println("Warning! enter valid number");
                         }
-                    }else {
+                    } else {
                         Account firstAccount = currentUser.getAccounts().get(0);
                         if (firstAccount instanceof IndividualAccount){
                             System.out.println("enter a new branch");
-                            String branch = input.nextLine();
+                            String branch = readNotBlank();
                             bank.createIndividualAccount(currentUser, branch);
                         } else if (firstAccount instanceof JuridicalAccount) {
                             System.out.println("enter company name ");
-                            String company = input.nextLine();
-                            bank.createJuridicalAccount(currentUser,company);
+                            String company = readNotBlank();
+                            bank.createJuridicalAccount(currentUser, company);
                         }
                     }
                     break;
@@ -190,8 +198,8 @@ public class ConsoleUI {
                 case 3:
                     System.out.println("First Name: " + currentUser.getFirstName());
                     System.out.println("Last Name: " + currentUser.getLastName());
-                    System.out.println("Nick Name: "+ currentUser.getLogin());
-                    System.out.println("Password: " +currentUser.getPassword());
+                    System.out.println("Nick Name: " + currentUser.getNickName());
+                    System.out.println("Password: " + currentUser.getPassword());
                     break;
                 case 4: {
                     if (currentUser.getAccounts().isEmpty()){
@@ -199,29 +207,44 @@ public class ConsoleUI {
                         continue;
                     }
                     System.out.println("choose your account to send money from: ");
-                    for (int i = 0;i<currentUser.getAccounts().size();i++){
-                        System.out.println(i + 1 + " ." + currentUser.getAccounts().get(i));
+                    for (int i = 0; i < currentUser.getAccounts().size(); i++){
+                        System.out.println((i + 1) + ". " + currentUser.getAccounts().get(i));
                     }
                     int accountChoice = readInt();
-                    if (accountChoice < 1|| accountChoice > currentUser.getAccounts().size()){
+                    if (accountChoice < 1 || accountChoice > currentUser.getAccounts().size()){
                         System.out.println("warning, invalid account choice");
                         continue;
                     }
                     Account senderAccount = currentUser.getAccounts().get(accountChoice - 1);
-                    if (senderAccount.getBalance().compareTo(BigDecimal.ZERO)<=0){
+                    if (senderAccount.getBalance().compareTo(BigDecimal.ZERO) <= 0){
                         System.out.println("Warning, not enough money, deposit your balance");
                         continue;
                     }
-                    System.out.print("enter recieve  account number: ");
-                    String reciever = input.nextLine();
-                    System.out.println("enter amount : ");
-                    double amount = readDouble();
-                    if (amount<1000 || amount >1000000){
-                        System.out.println("warning, amount must be between 1000 and 1000000");
-                        continue;
+                    System.out.print("enter receive account number: ");
+                    String reciever;
+                    while (true) {
+                        reciever = readNotBlank();
+                        if (senderAccount.getAccountNumber().equals(reciever)) {
+                            System.out.println("you can not send money to yourself");
+                            continue;
+                        }
+                        Account recieverAccount = bank.findAccountByNumber(reciever);
+                        if (recieverAccount == null) {
+                            continue;
+                        }
+                        break;
                     }
-                    String sender = senderAccount.getAccountNumber();
-                    bank.transfer(sender, reciever, amount);
+                    while (true) {
+                        System.out.println("enter amount : ");
+                        double amount = readDouble();
+                        if (amount < 1000 || amount > 1000000) {
+                            System.out.println("warning, amount must be between 1000 and 1000000");
+                            continue;
+                        }
+                        String sender = senderAccount.getAccountNumber();
+                        bank.transfer(sender, reciever, amount);
+                        break;
+                    }
                     break;
                 }
                 case 5: {
@@ -231,10 +254,10 @@ public class ConsoleUI {
                     }
                     System.out.println("choose account to deposit: ");
                     for (int i = 0; i < currentUser.getAccounts().size(); i++) {
-                        System.out.println(i + 1 + "." + currentUser.getAccounts().get(i));
+                        System.out.println((i + 1) + ". " + currentUser.getAccounts().get(i));
                     }
                     int accountChoice = readInt();
-                    if (accountChoice < 1|| accountChoice > currentUser.getAccounts().size()){
+                    if (accountChoice < 1 || accountChoice > currentUser.getAccounts().size()){
                         System.out.println("warning, invalid account choice");
                         continue;
                     }
@@ -247,6 +270,7 @@ public class ConsoleUI {
                     }
                     accountDeposit.deposit(amount);
                     System.out.println("balance updated successfully");
+                    bank.saveData(); // Сохраняем после депозита
                     break;
                 }
                 case 6:{
@@ -256,44 +280,45 @@ public class ConsoleUI {
                     }
                     System.out.println("choose account to withdraw: ");
                     for (int i = 0; i < currentUser.getAccounts().size(); i++) {
-                        System.out.println(i + 1 + "." + currentUser.getAccounts().get(i));
+                        System.out.println((i + 1) + ". " + currentUser.getAccounts().get(i));
                     }
                     int accountChoice = readInt();
-                    if (accountChoice < 1|| accountChoice > currentUser.getAccounts().size()){
+                    if (accountChoice < 1 || accountChoice > currentUser.getAccounts().size()){
                         System.out.println("warning, invalid account choice");
                         continue;
                     }
                     Account accountWithdraw = currentUser.getAccounts().get(accountChoice - 1);
                     System.out.println("enter amount of money in sum: ");
-                    Double amount  = readDouble();
+                    Double amount = readDouble();
                     if (amount < 1000 || amount > 1000000) {
                         System.out.println("warning, amount must be between 1000 and 1000000");
                         continue;
                     }
                     if(accountWithdraw.withdraw(amount)) {
                         System.out.println("money withdraw finished successfully");
-                    }else {
+                        bank.saveData(); // Сохраняем после снятия
+                    } else {
                         System.out.println("not enough money on your balance");
                     }
                     break;
                 }
                 case 7:{
-                    if (currentUser .getAccounts().isEmpty()){
+                    if (currentUser.getAccounts().isEmpty()){
                         System.out.println("you have no account yet");
                         continue;
                     }
                     System.out.println("choose account to delete: ");
-                    for (int i=0;i<currentUser.getAccounts().size();i++){
-                        System.out.println(i + 1 + "." + currentUser.getAccounts().get(i));
+                    for (int i=0; i<currentUser.getAccounts().size(); i++){
+                        System.out.println((i + 1) + ". " + currentUser.getAccounts().get(i));
                     }
                     int accountChoice = readInt();
-                    if (accountChoice < 1|| accountChoice > currentUser.getAccounts().size()){
+                    if (accountChoice < 1 || accountChoice > currentUser.getAccounts().size()){
                         System.out.println("warning, invalid account choice");
                         continue;
                     }
                     Account accountDelete = currentUser.getAccounts().get(accountChoice - 1);
                     String account = accountDelete.getAccountNumber();
-                    bank.deleteAccount(account); // Проверка баланса теперь под капотом Bank
+                    bank.deleteAccount(account);
                     break;
                 }
                 case 8:
@@ -308,10 +333,10 @@ public class ConsoleUI {
     private int readInt(){
         while (true){
             try {
-                String line  = input.nextLine();
+                String line = input.nextLine();
                 int number = Integer.parseInt(line);
                 return number;
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e){
                 System.out.println("Warning! please enter valid number");
             }
         }
@@ -323,7 +348,7 @@ public class ConsoleUI {
                 String line = input.nextLine();
                 double number = Double.parseDouble(line);
                 return number;
-            }catch (NumberFormatException e){
+            } catch (NumberFormatException e){
                 System.out.println("Warning! please enter valid number");
             }
         }
@@ -334,7 +359,7 @@ public class ConsoleUI {
             String line = input.nextLine();
             if (line.matches("[a-zA-Z]+")){
                 return line;
-            }else{
+            } else {
                 System.out.println("enter letters only");
             }
         }
@@ -343,21 +368,36 @@ public class ConsoleUI {
     public String readPassword(){
         while (true){
             String line = input.nextLine();
-            if(line.length()>= 8 && line.length()<=16){
-                return  line;
-            }else {
+            if(line.length() >= 8 && line.length() <= 16){
+                return line;
+            } else {
                 System.out.println("password length should be between 8 and 16");
             }
         }
     }
 
-    public String readUnique(){
+    public String readUniqueNickName(){
         while (true){
-            String login = input.nextLine();
-            if (bank.isLoginTaken(login)){
+            String nickName = readNotBlank();
+            if (!nickName.matches("[a-zA-Z0-9_]{3,20}")){
+                System.out.println("enter valid nickname");
+                continue;
+            }
+            if (bank.isNickNameTaken(nickName)){
                 System.out.println("this nickname is already taken, enter another one");
-            }else{
-                return login;
+            } else {
+                return nickName;
+            }
+        }
+    }
+
+    public String readNotBlank(){
+        while (true){
+            String line = input.nextLine();
+            if(line.isBlank()){
+                System.out.println("can not be empty");
+            } else {
+                return line;
             }
         }
     }

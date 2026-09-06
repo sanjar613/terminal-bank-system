@@ -1,3 +1,4 @@
+import java.io.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -6,14 +7,9 @@ import java.util.List;
 public class Bank {
     private List<User> users;
     private List<Account> accounts;
-    private List<String> branches;
 
     public Bank(){
-        this.users = new ArrayList<>();
-        LocalDateTime createdAt = LocalDateTime.now();
-        User user = new User("admin","adminov","adminovich","admin","12345",createdAt,User.Role.ADMIN);
-        users.add(user);
-        this.accounts = new ArrayList<>();
+        loadData();
     }
 
     public List<User> getUsers() { return users; }
@@ -21,20 +17,21 @@ public class Bank {
     public List<Account> getAccounts() { return accounts; }
     public void setAccounts(List<Account> accounts) { this.accounts = accounts; }
 
-    public void registerUser(String firstName, String lastName, String middleName, String login, String password){
+    public void registerUser(String firstName, String lastName, String middleName, String nickName, String password){
         LocalDateTime createdAt = LocalDateTime.now();
-        User user = new User(firstName,lastName,middleName,login,password,createdAt, User.Role.CLIENT);
+        User user = new User(firstName, lastName, middleName, nickName, password, createdAt, User.Role.CLIENT);
         users.add(user);
+        saveData();
     }
 
-    public User login(String login, String password){
+    public User login(String nickName, String password){
         for (int i = 0; i < users.size(); i++) {
             User currentUser = users.get(i);
-            if (currentUser.getLogin().equals(login) && currentUser.getPassword().equals(password)) {
+            if (currentUser.getNickName().equals(nickName) && currentUser.getPassword().equals(password)) {
                 return currentUser;
             }
         }
-        System.out.println("password or login is wrong");
+        System.out.println("password or nick name is wrong");
         return null;
     }
 
@@ -47,6 +44,7 @@ public class Bank {
         IndividualAccount account = new IndividualAccount(accountNumber, balance, LocalDateTime.now(), owner, branch);
         accounts.add(account);
         owner.addAccount(account);
+        saveData();
     }
 
     public void createJuridicalAccount(User owner, String company){
@@ -58,6 +56,7 @@ public class Bank {
         JuridicalAccount account = new JuridicalAccount(accountNumber, balance, LocalDateTime.now(), owner, company);
         accounts.add(account);
         owner.addAccount(account);
+        saveData();
     }
 
     public Account findAccountByNumber(String accountNumber){
@@ -76,12 +75,13 @@ public class Bank {
         Account reciever = findAccountByNumber(toAccountNumber);
         if(sender == null || reciever == null){
             return;
-        }else if(amount > 0 && sender.withdraw(amount)){
+        } else if(amount > 0 && sender.withdraw(amount)){
             reciever.deposit(amount);
             System.out.println("transfer completed succesfully");
-        }else {
+        } else {
             System.out.println("transfer failed");
         }
+        saveData();
     }
 
     public void deleteAccount(String accountNumber){
@@ -99,14 +99,69 @@ public class Bank {
         owner.removeAccount(account);
         accounts.remove(account);
         System.out.println("Account deleted");
+        saveData();
     }
 
-    public boolean isLoginTaken(String user){
+    public boolean isNickNameTaken(String nickName){
         for (int i = 0; i < users.size(); i++){
-            if(users.get(i).getLogin().equals(user)){
+            if(users.get(i).getNickName().equals(nickName)){
                 return true;
             }
         }
         return false;
+    }
+
+    public void saveData() {
+        try {
+            FileOutputStream openFile = new FileOutputStream("bank_data.txt");
+            ObjectOutputStream insertFiles = new ObjectOutputStream(openFile);
+            insertFiles.writeObject(accounts);
+            insertFiles.writeObject(users);
+            insertFiles.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void loadData(){
+        this.users = new ArrayList<>();
+        this.accounts = new ArrayList<>();
+        LocalDateTime createdAt = LocalDateTime.now();
+        User admin = new User("admin","adminov","adminovich","admin","12345",createdAt,User.Role.ADMIN);
+        User user = new User("User","Userov","Userovich","user","12345678",createdAt, User.Role.CLIENT);
+        users.add(admin);
+        users.add(user);
+
+        try {
+            FileInputStream openFile = new FileInputStream("bank_data.txt");
+            ObjectInputStream insertFiles = new ObjectInputStream(openFile);
+            this.accounts = (List<Account>) insertFiles.readObject();
+            this.users = (List<User>) insertFiles.readObject();
+            insertFiles.close();
+        } catch (IOException | ClassNotFoundException e){
+            // Файл не найден или классы изменились, остаются дефолтные
+        }
+    }
+
+    public List<IndividualAccount> getIndividualAccounts(){
+        ArrayList<IndividualAccount> list = new ArrayList<>();
+        for (int i = 0; i < accounts.size(); i++){
+            Account account = accounts.get(i);
+            if (account instanceof IndividualAccount){
+                list.add((IndividualAccount) account);
+            }
+        }
+        return list;
+    }
+
+    public List<JuridicalAccount> getJuridicalAccounts(){
+        ArrayList<JuridicalAccount> list = new ArrayList<>();
+        for (int i = 0; i < accounts.size(); i++){
+            Account account = accounts.get(i);
+            if (account instanceof JuridicalAccount){
+                list.add((JuridicalAccount) account);
+            }
+        }
+        return list;
     }
 }

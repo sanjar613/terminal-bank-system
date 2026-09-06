@@ -1,13 +1,14 @@
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class Account {
+public abstract class Account implements Serializable {
     private String accountNumber;
     private BigDecimal balance;
     private LocalDateTime createdAt;
     private User owner;
 
-    public Account(String accountNumber, BigDecimal balance,LocalDateTime createdAt, User owner){
+    public Account(String accountNumber, BigDecimal balance, LocalDateTime createdAt, User owner) {
         this.accountNumber = accountNumber;
         this.balance = balance;
         this.createdAt = createdAt;
@@ -15,34 +16,24 @@ public class Account {
     }
 
     public String getAccountNumber() { return accountNumber; }
-    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
     public BigDecimal getBalance() { return balance; }
-    public void setBalance(BigDecimal balance) { this.balance = balance; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public User getOwner() { return owner; }
-    public void setOwner(User owner) { this.owner = owner; }
 
-    public void deposit(double amount){
-        if(amount > 0){
-            this.balance = balance.add(BigDecimal.valueOf(amount));
-        }else{
-            System.out.println("Amount can not be a negative number");
-        }
+    public void deposit(double amount) {
+        this.balance = this.balance.add(BigDecimal.valueOf(amount));
     }
 
-    public boolean withdraw(double amount){
-        if (amount > 0 && balance.compareTo(BigDecimal.valueOf(amount)) >= 0){
-            balance = balance.subtract(BigDecimal.valueOf(amount));
+    public boolean withdraw(double amount) {
+        BigDecimal withdrawAmount = BigDecimal.valueOf(amount);
+        if (this.balance.compareTo(withdrawAmount) >= 0) {
+            this.balance = this.balance.subtract(withdrawAmount);
             return true;
-        }else{
-            System.out.println("not enough money");
-            return false;
         }
+        return false;
     }
 
     @Override
-    public String toString(){
-        return "account: " + accountNumber + " balance : " + balance;
+    public String toString() {
+        return "Account: " + accountNumber + " | Balance: " + balance;
     }
 }
