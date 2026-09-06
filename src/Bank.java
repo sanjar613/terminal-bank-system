@@ -139,7 +139,6 @@ public class Bank {
             this.users = (List<User>) insertFiles.readObject();
             insertFiles.close();
         } catch (IOException | ClassNotFoundException e){
-            // Файл не найден или классы изменились, остаются дефолтные
         }
     }
 
